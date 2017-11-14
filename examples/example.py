@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+from scipy.misc import imresize
+import cv2
 from matplotlib import pyplot as plt
 import os
 import sys
@@ -8,7 +10,7 @@ import sys
 examples_dir = os.path.dirname(__file__)
 weights_dir = os.path.join(examples_dir,'..','weights')
 sys.path.insert(0, os.path.join(examples_dir, '..', 'python'))
-
+sys.path.insert(0, os.path.join(examples_dir, '..', 'lmbspecialops/python'))
 from depthmotionnet.networks_original import *
 
 
@@ -20,12 +22,12 @@ def prepare_input_data(img1, img2, data_format):
     if img2.size[0] != 256 or img2.size[1] != 192:
         img2 = img2.resize((256,192))
     img2_2 = img2.resize((64,48))
-        
+
     # transform range from [0,255] to [-0.5,0.5]
     img1_arr = np.array(img1).astype(np.float32)/255 -0.5
     img2_arr = np.array(img2).astype(np.float32)/255 -0.5
     img2_2_arr = np.array(img2_2).astype(np.float32)/255 -0.5
-    
+
     if data_format == 'channels_first':
         img1_arr = img1_arr.transpose([2,0,1])
         img2_arr = img2_arr.transpose([2,0,1])
@@ -33,7 +35,7 @@ def prepare_input_data(img1, img2, data_format):
         image_pair = np.concatenate((img1_arr,img2_arr), axis=0)
     else:
         image_pair = np.concatenate((img1_arr,img2_arr),axis=-1)
-    
+
     result = {
         'image_pair': image_pair[np.newaxis,:],
         'image1': img1_arr[np.newaxis,:], # first image
@@ -47,7 +49,7 @@ if tf.test.is_gpu_available(True):
 else: # running on cpu requires channels_last data format
     data_format='channels_last'
 
-# 
+#
 # DeMoN has been trained for specific internal camera parameters.
 #
 # If you use your own images try to adapt the intrinsics by cropping
@@ -62,8 +64,10 @@ else: # running on cpu requires channels_last data format
 #
 
 # read data
-img1 = Image.open(os.path.join(examples_dir,'sculpture1.png'))
-img2 = Image.open(os.path.join(examples_dir,'sculpture2.png'))
+img1 = Image.open(os.path.join(examples_dir,'0000.png'))
+img2 = Image.open(os.path.join(examples_dir,'0019.png'))
+
+org_width,org_height=img1.size
 
 input_data = prepare_input_data(img1,img2,data_format)
 
@@ -87,29 +91,37 @@ saver.restore(session,os.path.join(weights_dir,'demon_original'))
 result = bootstrap_net.eval(input_data['image_pair'], input_data['image2_2'])
 for i in range(3):
     result = iterative_net.eval(
-        input_data['image_pair'], 
-        input_data['image2_2'], 
-        result['predict_depth2'], 
-        result['predict_normal2'], 
-        result['predict_rotation'], 
+        input_data['image_pair'],
+        input_data['image2_2'],
+        result['predict_depth2'],
+        result['predict_normal2'],
+        result['predict_rotation'],
         result['predict_translation']
     )
 rotation = result['predict_rotation']
 translation = result['predict_translation']
 result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
+result_depth=result['predict_depth0'].squeeze().copy()
+out=imresize(result_depth,(org_height,org_width))
 
-plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+if out==None or out.size==0:
+    print 'result after resize is empty!'
+    print original_image_size
+    print out.shape, type(result_depth)
+    sys.exit(1)
+print out.shape, type(result_depth)
+plt.imshow(out, cmap='Greys')
+cv2.imwrite('test.png',out)
 plt.show()
 
 # try to visualize the point cloud
 try:
     from depthmotionnet.vis import *
     visualize_prediction(
-        inverse_depth=result['predict_depth0'], 
-        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3], 
-        rotation=rotation, 
+        inverse_depth=result['predict_depth0'],
+        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+        rotation=rotation,
         translation=translation)
 except ImportError as err:
     print("Cannot visualize as pointcloud.", err)
-

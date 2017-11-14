@@ -11,7 +11,7 @@ include(ExternalProject)
 #
 
 # webp
-ExternalProject_Add( 
+ExternalProject_Add(
         webp
         PREFIX "${CMAKE_BINARY_DIR}/webp"
         URL "http://downloads.webmproject.org/releases/webp/libwebp-0.5.1.tar.gz"
@@ -28,7 +28,7 @@ set( webp_LIBRARY "${BINARY_DIR}/src/.libs/libwebp.a" )
 
 
 # lz4
-ExternalProject_Add( 
+ExternalProject_Add(
         lz4
         PREFIX "${CMAKE_BINARY_DIR}/lz4"
 	URL "https://github.com/lz4/lz4/archive/v1.7.5.tar.gz"
@@ -47,22 +47,22 @@ set( lz4_STATIC_LIB "${BINARY_DIR}/contrib/cmake_unofficial/liblz4.a" )
 
 # json for modern c++
 message( STATUS "Downloading json" )
-file( DOWNLOAD "https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp"
-      "${CMAKE_BINARY_DIR}/json_for_modern_cpp/json.hpp" SHOW_PROGRESS )
+#file( DOWNLOAD "https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp"
+#      "${CMAKE_BINARY_DIR}/json_for_modern_cpp/json.hpp" SHOW_PROGRESS )
 set( json_for_modern_cpp_INCLUDE_DIR "${CMAKE_BINARY_DIR}/json_for_modern_cpp/" )
 
 
 # half
 message( STATUS "Downloading half" )
-file( DOWNLOAD "https://sourceforge.net/p/half/code/HEAD/tree/tags/release-1.12.0/include/half.hpp?format=raw"
-      "${CMAKE_BINARY_DIR}/half/include/half.hpp" SHOW_PROGRESS )
+#file( DOWNLOAD "https://sourceforge.net/p/half/code/HEAD/tree/tags/release-1.12.0/include/half.hpp?format=raw"
+#      "${CMAKE_BINARY_DIR}/half/include/half.hpp" SHOW_PROGRESS )
 set( half_INCLUDE_DIR "${CMAKE_BINARY_DIR}/half/include" )
 
 
 # retrieve tensorflow include dir and lib dir
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')" 
+execute_process(COMMAND python "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_include(), end='')"
         OUTPUT_VARIABLE TENSORFLOW_INCLUDE_DIR )
-execute_process( COMMAND ${PYTHON_EXECUTABLE} "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')" 
+execute_process(COMMAND python "-c" "from __future__ import print_function; import tensorflow as tf; print(tf.sysconfig.get_lib(), end='')"
         OUTPUT_VARIABLE TENSORFLOW_LIB_DIR )
 find_library( TENSORFLOW_FRAMEWORK_LIB tensorflow_framework PATHS "${TENSORFLOW_LIB_DIR}" NO_DEFAULT_PATH )
 message( STATUS "${TENSORFLOW_INCLUDE_DIR}" )
@@ -87,7 +87,7 @@ target_include_directories( multivih5datareaderop PRIVATE
         ${TENSORFLOW_INCLUDE_DIR}/external/nsync/public/
         ${lz4_INCLUDE_DIR}
         ${webp_INCLUDE_DIR}
-        ${HDF5_INCLUDE_DIRS}        
+        ${HDF5_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
 	${json_for_modern_cpp_INCLUDE_DIR}
 	${half_INCLUDE_DIR}
@@ -96,10 +96,9 @@ target_include_directories( multivih5datareaderop PRIVATE
 target_link_libraries( multivih5datareaderop
         ${lz4_STATIC_LIB}
         ${webp_LIBRARY}
-        ${HDF5_LIBRARIES}        
+        ${HDF5_LIBRARIES}
         ${OpenCV_LIBS}
 )
 if( TENSORFLOW_FRAMEWORK_LIB )
         target_link_libraries( multivih5datareaderop ${TENSORFLOW_FRAMEWORK_LIB} )
 endif()
-

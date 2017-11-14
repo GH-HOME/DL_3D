@@ -1,42 +1,42 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import tensorflow as tf
 import lmbspecialops as sops
 import numpy as np
- 
+
 def convert_NCHW_to_NHWC(inp):
     """Convert the tensor from caffe format NCHW into tensorflow format NHWC
-        
-        inp: tensor 
+
+        inp: tensor
     """
     return tf.transpose(inp,[0,2,3,1])
 
 def convert_NHWC_to_NCHW(inp):
-    """Convert the tensor from tensorflow format NHWC into caffe format NCHW 
-        
-        inp: tensor 
+    """Convert the tensor from tensorflow format NHWC into caffe format NCHW
+
+        inp: tensor
     """
     return tf.transpose(inp,[0,3,1,2])
 
 
 def angleaxis_to_rotation_matrix(aa):
     """Converts the 3 element angle axis representation to a 3x3 rotation matrix
-    
+
     aa: numpy.ndarray with 1 dimension and 3 elements
 
     Returns a 3x3 numpy.ndarray
@@ -90,13 +90,13 @@ def conv2d_caffe_padding(inputs, num_outputs, kernel_size, data_format, **kwargs
         kernel_initializer=default_weights_initializer(),
         padding='valid',
         data_format=data_format,
-        **kwargs,
+        **kwargs
         )
 
 
 def convrelu_caffe_padding(inputs, num_outputs, kernel_size, data_format, **kwargs):
-    """Shortcut for a single convolution+relu 
-    
+    """Shortcut for a single convolution+relu
+
     See tf.layers.conv2d for a description of remaining parameters
     """
     return conv2d_caffe_padding(inputs, num_outputs, kernel_size, data_format, activation=myLeakyRelu, **kwargs)
@@ -104,7 +104,7 @@ def convrelu_caffe_padding(inputs, num_outputs, kernel_size, data_format, **kwar
 
 def convrelu2_caffe_padding(inputs, num_outputs, kernel_size, name, stride, data_format, **kwargs):
     """Shortcut for two convolution+relu with 1D filter kernels and 'same' padding as in caffe
-    
+
     num_outputs: int or (int,int)
         If num_outputs is a tuple then the first element is the number of
         outputs for the 1d filter in y direction and the second element is
@@ -137,7 +137,7 @@ def convrelu2_caffe_padding(inputs, num_outputs, kernel_size, name, stride, data
         kernel_initializer=default_weights_initializer(),
         data_format=data_format,
         name=name+'y',
-        **kwargs,
+        **kwargs
     )
     return tf.layers.conv2d(
         inputs=tf.pad(tmp_y, paddings=paddings_x),
@@ -149,6 +149,5 @@ def convrelu2_caffe_padding(inputs, num_outputs, kernel_size, name, stride, data
         kernel_initializer=default_weights_initializer(),
         data_format=data_format,
         name=name+'x',
-        **kwargs,
+        **kwargs
     )
-
